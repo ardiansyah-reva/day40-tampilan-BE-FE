@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+
+    <!-- Bootstrap -->
+    <link 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+
+<body class="bg-light">
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark bg-dark px-3">
+        <a href="dashboard.html" class="navbar-brand">Dashboard</a>
+        <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container mt-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Products</h3>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
+                + Add Product
+            </button>
+        </div>
+
+        <div id="alert"></div>
+
+        <table class="table table-bordered table-striped shadow">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Brand</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Rating</th>
+                    <th width="160">Action</th>
+                </tr>
+            </thead>
+            <tbody id="productsTable"></tbody>
+        </table>
+    </div>
+
+    <!-- ADD MODAL -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Product</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="addForm">
+                        <input id="addName" class="form-control mb-2" placeholder="Name" required>
+                        <input id="addCategory" class="form-control mb-2" placeholder="Category" required>
+                        <input id="addBrand" class="form-control mb-2" placeholder="Brand" required>
+                        <input id="addPrice" class="form-control mb-2" placeholder="Price" type="number" required>
+                        <input id="addStock" class="form-control mb-2" placeholder="Stock" type="number" required>
+                        <input id="addRating" class="form-control mb-2" placeholder="Rating" type="number" step="0.1" required>
+                        <textarea id="addDesc" class="form-control mb-2" placeholder="Description"></textarea>
+
+                        <button class="btn btn-success w-100">Save</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Product</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input id="editId" hidden>
+
+                        <input id="editName" class="form-control mb-2" placeholder="Name" required>
+                        <input id="editCategory" class="form-control mb-2" placeholder="Category" required>
+                        <input id="editBrand" class="form-control mb-2" placeholder="Brand" required>
+                        <input id="editPrice" class="form-control mb-2" placeholder="Price" type="number" required>
+                        <input id="editStock" class="form-control mb-2" placeholder="Stock" type="number" required>
+                        <input id="editRating" class="form-control mb-2" placeholder="Rating" type="number" step="0.1" required>
+                        <textarea id="editDesc" class="form-control mb-2" placeholder="Description"></textarea>
+
+                        <button class="btn btn-primary w-100">Update</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="navigation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        requireAuth();
+        const BASE_URL = "http://localhost:8000/products";
+
+        async function loadProducts() {
+            try {
+                const products = await apiGet(BASE_URL);
+
+                const tbody = document.getElementById("productsTable");
+                tbody.innerHTML = "";
+
+                products.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${p.brand}</td>
+                            <td>$${p.price}</td>
+                            <td>${p.stock}</td>
+                            <td>${p.rating}</td>
+
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="showEdit(${p.id})">
+                                    Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="delProduct(${p.id})">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+            } catch (err) {
+                showAlert(err.message, "danger");
+            }
+        }
+
+        // ADD PRODUCT
+        document.getElementById("addForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const body = {
+                name: addName.value,
+                category: addCategory.value,
+                brand: addBrand.value,
+                description: addDesc.value,
+                price: Number(addPrice.value),
+                stock: Number(addStock.value),
+                rating: Number(addRating.value)
+            };
+
+            try {
+                await apiPost(BASE_URL, body);
+                showAlert("Product added!", "success");
+                loadProducts();
+            } catch (err) {
+                showAlert(err.message, "danger");
+            }
+        });
+
+        // SHOW EDIT MODAL
+        async function showEdit(id) {
+            const res = await apiGet(`${BASE_URL}/${id}`);
+            const p = res.data;
+
+            editId.value = p.id;
+            editName.value = p.name;
+            editCategory.value = p.category;
+            editBrand.value = p.brand;
+            editPrice.value = p.price;
+            editStock.value = p.stock;
+            editRating.value = p.rating;
+            editDesc.value = p.description;
+
+            new bootstrap.Modal(document.getElementById("editModal")).show();
+        }
+
+        // UPDATE PRODUCT
+        document.getElementById("editForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const id = editId.value;
+
+            const body = {
+                name: editName.value,
+                category: editCategory.value,
+                brand: editBrand.value,
+                description: editDesc.value,
+                price: Number(editPrice.value),
+                stock: Number(editStock.value),
+                rating: Number(editRating.value)
+            };
+
+            try {
+                await apiPut(`${BASE_URL}/${id}`, body);
+                showAlert("Product updated!", "success");
+                loadProducts();
+            } catch (err) {
+                showAlert(err.message, "danger");
+            }
+        });
+
+        // DELETE PRODUCT
+        async function delProduct(id) {
+            if (!confirm("Yakin hapus produk ini?")) return;
+
+            try {
+                await apiDelete(`${BASE_URL}/${id}`);
+                showAlert("Product deleted!", "success");
+                loadProducts();
+            } catch (err) {
+                showAlert(err.message, "danger");
+            }
+        }
+
+        function showAlert(msg, type) {
+            document.getElementById("alert").innerHTML = `
+                <div class="alert alert-${type}">${msg}</div>
+            `;
+        }
+
+        loadProducts();
+    </script>
+
+</body>
+</html>
