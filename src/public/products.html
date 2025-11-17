@@ -1,20 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products</title>
 
-    <!-- Bootstrap -->
-    <link 
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
-
-    <!-- NAVBAR -->
     <nav class="navbar navbar-dark bg-dark px-3">
         <a href="dashboard.html" class="navbar-brand">Dashboard</a>
         <button class="btn btn-outline-light" onclick="logout()">Logout</button>
@@ -24,13 +19,12 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>Products</h3>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
-                + Add Product
-            </button>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">+ Add Product</button>
         </div>
 
         <div id="alert"></div>
 
+        <!-- TABLE TANPA KOLOM GAMBAR -->
         <table class="table table-bordered table-striped shadow">
             <thead class="table-dark">
                 <tr>
@@ -40,7 +34,7 @@
                     <th>Price</th>
                     <th>Stock</th>
                     <th>Rating</th>
-                    <th width="160">Action</th>
+                    <th width="200">Action</th>
                 </tr>
             </thead>
             <tbody id="productsTable"></tbody>
@@ -65,8 +59,8 @@
                         <input id="addPrice" class="form-control mb-2" placeholder="Price" type="number" required>
                         <input id="addStock" class="form-control mb-2" placeholder="Stock" type="number" required>
                         <input id="addRating" class="form-control mb-2" placeholder="Rating" type="number" step="0.1" required>
+                        <input id="addImage" class="form-control mb-2" placeholder="Image URL">
                         <textarea id="addDesc" class="form-control mb-2" placeholder="Description"></textarea>
-
                         <button class="btn btn-success w-100">Save</button>
                     </form>
                 </div>
@@ -88,15 +82,14 @@
                 <div class="modal-body">
                     <form id="editForm">
                         <input id="editId" hidden>
-
                         <input id="editName" class="form-control mb-2" placeholder="Name" required>
                         <input id="editCategory" class="form-control mb-2" placeholder="Category" required>
                         <input id="editBrand" class="form-control mb-2" placeholder="Brand" required>
                         <input id="editPrice" class="form-control mb-2" placeholder="Price" type="number" required>
                         <input id="editStock" class="form-control mb-2" placeholder="Stock" type="number" required>
                         <input id="editRating" class="form-control mb-2" placeholder="Rating" type="number" step="0.1" required>
+                        <input id="editImage" class="form-control mb-2" placeholder="Image URL">
                         <textarea id="editDesc" class="form-control mb-2" placeholder="Description"></textarea>
-
                         <button class="btn btn-primary w-100">Update</button>
                     </form>
                 </div>
@@ -105,134 +98,204 @@
         </div>
     </div>
 
-    <!-- JS -->
+    <!-- VIEW MODAL -->
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Product Details</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="text-center mb-3">
+                        <img id="viewImage" src="" class="img-fluid rounded" style="max-height:250px">
+                    </div>
+
+                    <div class="row mb-2"><div class="col-4 fw-bold">ID</div><div class="col-8" id="viewId"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Name</div><div class="col-8" id="viewName"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Category</div><div class="col-8" id="viewCategory"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Brand</div><div class="col-8" id="viewBrand"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Price</div><div class="col-8" id="viewPrice"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Stock</div><div class="col-8" id="viewStock"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Rating</div><div class="col-8" id="viewRating"></div></div>
+                    <div class="row mb-2"><div class="col-4 fw-bold">Description</div><div class="col-8" id="viewDesc"></div></div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script src="navigation.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        requireAuth();
-        const BASE_URL = "http://localhost:8000/products";
+<script>
+    requireAuth();
+    const BASE_URL = "http://localhost:8000/products";
 
-        async function loadProducts() {
-            try {
-                const products = await apiGet(BASE_URL);
-
-                const tbody = document.getElementById("productsTable");
-                tbody.innerHTML = "";
-
-                products.forEach(p => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${p.id}</td>
-                            <td>${p.name}</td>
-                            <td>${p.brand}</td>
-                            <td>$${p.price}</td>
-                            <td>${p.stock}</td>
-                            <td>${p.rating}</td>
-
-                            <td>
-                                <button class="btn btn-sm btn-warning" onclick="showEdit(${p.id})">
-                                    Edit
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="delProduct(${p.id})">
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-            } catch (err) {
-                showAlert(err.message, "danger");
-            }
-        }
-
-        // ADD PRODUCT
-        document.getElementById("addForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const body = {
-                name: addName.value,
-                category: addCategory.value,
-                brand: addBrand.value,
-                description: addDesc.value,
-                price: Number(addPrice.value),
-                stock: Number(addStock.value),
-                rating: Number(addRating.value)
-            };
-
-            try {
-                await apiPost(BASE_URL, body);
-                showAlert("Product added!", "success");
-                loadProducts();
-            } catch (err) {
-                showAlert(err.message, "danger");
-            }
+    // Prevent Enter from submitting
+    document.querySelectorAll("input, textarea").forEach(el => {
+        el.addEventListener("keydown", e => {
+            if (e.key === "Enter") e.preventDefault();
         });
+    });
 
-        // SHOW EDIT MODAL
-        async function showEdit(id) {
-            const res = await apiGet(`${BASE_URL}/${id}`);
-            const p = res.data;
+    // LOAD PRODUCTS TANPA GAMBAR
+    async function loadProducts() {
+        try {
+            const products = await apiGet(BASE_URL);
+            const list = products.data ? products.data : products;
 
-            editId.value = p.id;
-            editName.value = p.name;
-            editCategory.value = p.category;
-            editBrand.value = p.brand;
-            editPrice.value = p.price;
-            editStock.value = p.stock;
-            editRating.value = p.rating;
-            editDesc.value = p.description;
+            const tbody = document.getElementById("productsTable");
+            tbody.innerHTML = "";
 
-            new bootstrap.Modal(document.getElementById("editModal")).show();
+            list.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.name}</td>
+                        <td>${p.brand}</td>
+                        <td>$${p.price}</td>
+                        <td>${p.stock}</td>
+                        <td>${p.rating}</td>
+
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="showView(${p.id})">View</button>
+                            <button class="btn btn-sm btn-warning" onclick="showEdit(${p.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="delProduct(${p.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+        } catch (err) {
+            showAlert(err.message, "danger");
         }
+    }
 
-        // UPDATE PRODUCT
-        document.getElementById("editForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
+    // ADD PRODUCT
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-            const id = editId.value;
+        const imageUrl = addImage.value.trim();
 
-            const body = {
-                name: editName.value,
-                category: editCategory.value,
-                brand: editBrand.value,
-                description: editDesc.value,
-                price: Number(editPrice.value),
-                stock: Number(editStock.value),
-                rating: Number(editRating.value)
-            };
+        const body = {
+            name: addName.value,
+            category: addCategory.value,
+            brand: addBrand.value,
+            description: addDesc.value,
+            price: Number(addPrice.value),
+            stock: Number(addStock.value),
+            rating: Number(addRating.value),
+            media: imageUrl ? [{ url: imageUrl, type: "image" }] : []
+        };
 
-            try {
-                await apiPut(`${BASE_URL}/${id}`, body);
-                showAlert("Product updated!", "success");
-                loadProducts();
-            } catch (err) {
-                showAlert(err.message, "danger");
-            }
-        });
+        try {
+            await apiPost(BASE_URL, body);
+            showAlert("Product added!", "success");
+            addForm.reset();
+            loadProducts();
 
-        // DELETE PRODUCT
-        async function delProduct(id) {
-            if (!confirm("Yakin hapus produk ini?")) return;
-
-            try {
-                await apiDelete(`${BASE_URL}/${id}`);
-                showAlert("Product deleted!", "success");
-                loadProducts();
-            } catch (err) {
-                showAlert(err.message, "danger");
-            }
+        } catch (err) {
+            showAlert(err.message, "danger");
         }
+    });
 
-        function showAlert(msg, type) {
-            document.getElementById("alert").innerHTML = `
-                <div class="alert alert-${type}">${msg}</div>
-            `;
+    // VIEW PRODUCT
+    async function showView(id) {
+        const res = await apiGet(`${BASE_URL}/${id}`);
+        const p = res.data;
+
+        viewImage.src = p.media?.length ? p.media[0].url : "https://via.placeholder.com/300";
+
+        viewId.textContent = p.id;
+        viewName.textContent = p.name;
+        viewCategory.textContent = p.category;
+        viewBrand.textContent = p.brand;
+        viewPrice.textContent = p.price;
+        viewStock.textContent = p.stock;
+        viewRating.textContent = p.rating;
+        viewDesc.textContent = p.description;
+
+        new bootstrap.Modal(document.getElementById("viewModal")).show();
+    }
+
+    // EDIT PRODUCT
+    async function showEdit(id) {
+        const res = await apiGet(`${BASE_URL}/${id}`);
+        const p = res.data;
+
+        editId.value = p.id;
+        editName.value = p.name;
+        editCategory.value = p.category;
+        editBrand.value = p.brand;
+        editPrice.value = p.price;
+        editStock.value = p.stock;
+        editRating.value = p.rating;
+        editDesc.value = p.description;
+
+        editImage.value = p.media?.length ? p.media[0].url : "";
+
+        new bootstrap.Modal(document.getElementById("editModal")).show();
+    }
+
+    // UPDATE PRODUCT
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const id = editId.value;
+        const imageUrl = editImage.value.trim();
+
+        const body = {
+            name: editName.value,
+            category: editCategory.value,
+            brand: editBrand.value,
+            description: editDesc.value,
+            price: Number(editPrice.value),
+            stock: Number(editStock.value),
+            rating: Number(editRating.value),
+            media: imageUrl ? [{ url: imageUrl, type: "image" }] : []
+        };
+
+        try {
+            await apiPut(`${BASE_URL}/${id}`, body);
+            showAlert("Product updated!", "success");
+            loadProducts();
+
+        } catch (err) {
+            showAlert(err.message, "danger");
         }
+    });
 
-        loadProducts();
-    </script>
+    // DELETE PRODUCT
+    async function delProduct(id) {
+        if (!confirm("Yakin hapus produk ini?")) return;
+
+        try {
+            await apiDelete(`${BASE_URL}/${id}`);
+            showAlert("Product deleted!", "success");
+            loadProducts();
+
+        } catch (err) {
+            showAlert(err.message, "danger");
+        }
+    }
+
+    function showAlert(msg, type) {
+        document.getElementById("alert").innerHTML = `
+            <div class="alert alert-${type}">${msg}</div>
+        `;
+    }
+
+    loadProducts();
+</script>
 
 </body>
 </html>

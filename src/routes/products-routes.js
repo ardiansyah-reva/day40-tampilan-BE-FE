@@ -36,6 +36,28 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// nambahin data produk
+router.post("/", async (req, res) => {
+  const { name, category, brand, description, price, stock, rating, media } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO products 
+      (name, category, brand, description, price, stock, rating, media)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *`,
+      [name, category, brand, description, price, stock, rating, JSON.stringify(media)] // media disimpan sebagai JSON
+    );
+
+    return res.status(201).json({
+      message: " Produk berhasil ditambahkan",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.error(" Database error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.put("/:id", async (req, res) => {
   const ID = parseInt(req.params.id);

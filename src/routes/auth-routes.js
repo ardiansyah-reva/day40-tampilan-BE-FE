@@ -9,9 +9,9 @@ const router = Router();
 const jwtExpiresIn = "1h";
 // REGISTER
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { nickname, email, password } = req.body;
 
-  if (!name || !email || !password) {
+  if (!nickname || !email || !password) {
     return res.status(400).json({ error: 'Semua field wajib diisi!' });
   }
 
@@ -24,8 +24,8 @@ router.post('/register', async (req, res) => {
     const hashed = bcrypt.hashSync(password, 10);
 
     const result = await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email',
-      [name, email, hashed]
+      'INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, nickname, email',
+      [nickname, email, hashed]
     );
 
     res.status(201).json({ user: result.rows[0] });
@@ -64,7 +64,7 @@ router.post("/login", async (req, res) => {
       token,
       user: {
         id: user.id,
-        name: user.name,
+        nickname: user.nickname,
         email: user.email
       }
     });
